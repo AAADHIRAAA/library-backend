@@ -3,10 +3,10 @@ const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-
+const rateLimit = require('express-rate-limit');
 const userRouter = require('./routes/userRouter');
 const bookRouter = require('./routes/bookRouter');
-
+const userController = require('./controllers/userController');
 const app = express();
 const limit = rateLimit({
   max: 100,

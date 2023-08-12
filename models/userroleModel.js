@@ -8,8 +8,8 @@ const roleSchema = new mongoose.Schema({
 const Role = mongoose.model('Role',roleSchema);
 
 const userroleSchema = new mongoose.Schema({
-    user_id:[{type: mongoose.Schema.Types.ObjectId, ref:'User'}],
-    role_id:[{type: mongoose.Schema.Types.ObjectId, ref: 'Role'}]
+    user_id:String,
+    role_id: String
 
 });
 

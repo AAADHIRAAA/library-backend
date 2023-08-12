@@ -2,9 +2,10 @@ const express = require('express');
 const router = express.Router();
 const mail = require("../utils/mail");
 const userController = require('../controllers/userController');
+const authMiddleware = require('../middleware/authMiddleware');
 router.post('/signup', userController.signup);
 // Login route
-router.post('/login', userController.userLogin);
+router.post('/login', userController.login);
 
 // Verify email route
 router.get('/verify-email/:token', userController.verifyEmail);
