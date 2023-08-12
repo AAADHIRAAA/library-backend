@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Replace the connection string with your MongoDB Atlas connection string
-const atlasConnectionString = 'mongodb+srv://padmapriyas:Padma2023atlas@library-cluster.rhvnbwa.mongodb.net/';
+const atlasConnectionString = 'mongodb+srv://padmapriyas:Padma2023atlas@library-cluster.rhvnbwa.mongodb.net/librarydb';
 
 mongoose.connect(atlasConnectionString, {
   useNewUrlParser: true,
