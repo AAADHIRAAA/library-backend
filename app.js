@@ -24,7 +24,8 @@ app.use('/library/api/users', userRouter);
 app.use('/library/api/books', bookRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
-
+// Route for verifying email
+app.get('/verify', userController.verifyEmail);
 
 
 // catch 404 and forward to error handler

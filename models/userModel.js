@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   password:String,
-  verified: Boolean,
+  verified: { type: Boolean, default: false },
   ph_no: String
   
 });

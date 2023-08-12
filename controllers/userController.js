@@ -1,7 +1,234 @@
 const User = require('..models/userModel');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const mail = require("../utils/mail");
+const crypto = require('crypto');
+const { isValidVerificationToken } = require('../utils/mail');
 
-const userController = {
+function generateVerificationToken(user) {
+    const token = jwt.sign({ userId: user._id }, EMAIL_SECRET, { expiresIn: '1h' });
+    return token;
+  }
+  
 
+async function signup(req, res) {
+  
+  try {
+
+    const { 
+        name,
+        email, 
+        password,
+        ph_no 
+       } = req.body;
+
+    // Check if user with the provided email already exists
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
+
+    // Hash the password before storing it
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
+    const newUser = new User({
+      name,
+      email,
+      ph_no,
+      password: hashedPassword,
+    });
+
+    const savedUser = await newUser.save();
+    // Generate a verification token for the user based on email and password
+    const verificationToken = generateVerificationToken(savedUser); 
+
+    // Send the verification email using the verificationToken
+    await mail.sendVerificationEmail(email, verificationToken);
+
+    res.status(201).json({ message: 'User registered successfully', user: savedUser });
+  } catch (error) {
+    console.error('Error signing up:', error);
+    res.status(500).json({ message: 'Error signing up' });
+  }
 }
 
-module.export = userController;
+async function verifyEmail(req, res) {
+  const { token } = req.query;
+  const userEmail = req.query.email;
+
+  if (!isValidVerificationToken(token)) {
+    return res.status(400).json({ message: 'Invalid verification token' });
+  }
+
+  // Find the user by their email (assuming email is the unique identifier)
+  const user = await User.findOne({ email: userEmail });
+
+  if (!user) {
+    return res.status(400).json({ message: 'User not found' });
+  }
+
+  // Mark the user's email as verified
+  user.verified = true;
+
+  // Save the changes to the user's document in the database
+  await user.save();
+
+  return res.status(200).json({ message: 'Email verification successful' });
+}
+
+
+async function login(req, res) {
+
+  try {
+
+    const { email, password } = req.body;
+    // Find the user by email
+    const user = await User.findOne({ email });
+
+    // Check if the user exists
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
+
+    // Compare the provided password with the stored hash
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid Password' });
+    }
+
+    // Check if the user is verified
+    if (!user.isVerified) {
+      // Generate a dynamic verification token
+      const verificationToken = generateVerificationToken(user);
+
+      // Send a verification email with the token
+      sendVerificationEmail(user.email, verificationToken);
+
+      return res.status(401).json({ message: 'Account not verified. Verification email sent.' });
+    }
+
+    // Generate and send JWT token for authentication
+    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).json({ token });
+  } catch (error) {
+    console.error('Error during login:', error);
+    res.status(500).json({ message: 'Error during login' });
+  }
+}
+
+
+exports.userForgotPassword = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            throw new Error(`User with email ${email} not found`);
+        }
+
+        // Generate a password reset token
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        user.passwordResetToken = resetToken;
+        user.passwordResetExpires = Date.now() + 3600000; // Token valid for 1 hour
+        await user.save();
+
+        // Send the password reset email
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              type: 'OAuth2',
+              user: mail.USER,
+              clientId: CLIENT_ID,
+              clientSecret: CLIENT_SEC,
+              refreshToken: REFRESH_TOKEN,
+              accessToken: token,
+            },
+        });
+
+        const resetLink = `http://localhost:3000/reset/${resetToken}`;
+        const mailOptions = {
+            from: mail.USER,
+            to: user.email,
+            subject: 'Password Reset',
+            html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
+        };
+
+         await transporter.sendMail(mailOptions);
+
+        res.status(200).json({ message: 'Password reset email sent successfully' });
+    } catch (error) {
+        console.error('Error sending password reset email:', error);
+        res.status(500).json({ message: 'Error sending password reset email' });
+    }
+};
+
+exports.userResetPassword = async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        const user = await User.findOne({ passwordResetToken: token, passwordResetExpires: { $gt: Date.now() } });
+
+        if (!user) {
+            throw new Error(`Invalid token or token expired`);
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+        user.password = hashedPassword;
+        user.passwordResetToken = undefined;
+        user.passwordResetExpires = undefined;
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successful' });
+    } catch (error) {
+        console.error('Error resetting password:', error);
+        res.status(500).json({ message: 'Error resetting password' });
+    }
+};
+
+// Update a user by their email
+async function updateUserByEmail(email, updatedData) {
+    try {
+        const allowedFields = ['name', 'email', 'password', 'ph_no']; // Add more fields as needed
+        const updates = {};
+
+        // Only include allowed fields in the updates object
+        for (const field of allowedFields) {
+            if (updatedData[field] !== undefined) {
+                updates[field] = updatedData[field];
+            }
+        }
+
+        const user = await User.findOneAndUpdate({ email }, updates, { new: true });
+        if (!user) {
+            throw new Error(`User with email ${email} not found`);
+        }
+        return user;
+    } catch (error) {
+        throw error;
+    }
+}
+
+async function deleteUserByEmail(email) {
+    try {
+        const user = await User.findOneAndDelete({ email });
+        if (!user) {
+            throw new Error(`User with email ${email} not found`);
+        }
+        return user;
+    } catch (error) {
+        throw error;
+    }
+}
+
+module.exports={
+    signup,
+    verifyEmail,
+    login,
+    updateUserByEmail,
+    deleteUserByEmail
+}
