@@ -1,18 +1,22 @@
 const createError = require('http-errors');
 const express = require('express');
 const path = require('path');
+const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
+const jwtSecret = process.env.JWT_SECRET;
 const rateLimit = require('express-rate-limit');
 const userRouter = require('./routes/userRouter');
 const bookRouter = require('./routes/bookRouter');
 const userController = require('./controllers/userController');
+dotenv.config();
 const app = express();
 const limit = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 60,
   message: 'Too many request with this IP Address..Try again in 1 hour'
 });
+
 
 app.use(logger('dev'));
 app.use(express.json());
@@ -24,8 +28,7 @@ app.use('/library/api/users', userRouter);
 app.use('/library/api/books', bookRouter);
 
 app.use(express.static(path.join(__dirname, 'public')));
-// Route for verifying email
-app.get('/verify', userController.verifyEmail);
+
 
 
 // catch 404 and forward to error handler

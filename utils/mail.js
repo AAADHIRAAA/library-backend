@@ -60,7 +60,6 @@ async function sendVerificationEmail(recipientEmail, verificationToken) {
   }
 }
 
-// utils.js
 
 function isValidVerificationToken(token) {
     // Adjust these values based on your token requirements
@@ -77,8 +76,45 @@ function isValidVerificationToken(token) {
     );
   }
 
+
+  // Create a function to send a password reset email
+async function sendPasswordResetEmail(recipientEmail, resetToken) {
+  try {
+    // Get an access token for the OAuth2 client
+    const { token } = await oAuth2Client.getAccessToken();
+  // Send the password reset email
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      type: 'OAuth2',
+      user: mail.USER,
+      clientId: CLIENT_ID,
+      clientSecret: CLIENT_SEC,
+      refreshToken: REFRESH_TOKEN,
+      accessToken: token,
+    },
+});
+
+const resetLink = `http://localhost:3000/reset/${resetToken}`;
+const mailOptions = {
+    from: USER,
+    to: recipientEmail,
+    subject: 'Password Reset',
+    html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
+};
+
+ await transporter.sendMail(mailOptions);
+
+res.status(200).json({ message: 'Password reset email sent successfully' });
+} catch (error) {
+console.error('Error sending password reset email:', error);
+res.status(500).json({ message: 'Error sending password reset email' });
+}
+};
+
   
 module.exports = {
   sendVerificationEmail,
-  isValidVerificationToken
+  isValidVerificationToken,
+  sendPasswordResetEmail
 };

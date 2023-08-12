@@ -1,12 +1,17 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+const resetToken = process.env.RESET_TOKEN;
+const jwtSecret = process.env.JWT_SECRET;
+const emailSecret = process.env.EMAIL_SECRET;
+const expiresIn = process.env.JWT_EXPIRESIN;
 const mail = require("../utils/mail");
 const crypto = require('crypto');
 const { isValidVerificationToken } = require('../utils/mail');
 
 function generateVerificationToken(user) {
-    const token = jwt.sign({ userId: user._id }, EMAIL_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user._id }, emailSecret,  expiresIn);
     return token;
   }
   
@@ -100,7 +105,7 @@ async function login(req, res) {
     }
 
     // Check if the user is verified
-    if (!user.isVerified) {
+    if (!user.verified) {
       // Generate a dynamic verification token
       const verificationToken = generateVerificationToken(user);
 
@@ -111,7 +116,7 @@ async function login(req, res) {
     }
 
     // Generate and send JWT token for authentication
-    const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user._id },jwtSecret, expiresIn);
     res.status(200).json({ token });
   } catch (error) {
     console.error('Error during login:', error);
@@ -121,7 +126,7 @@ async function login(req, res) {
 
 
 exports.userForgotPassword = async (req, res) => {
-    try {
+
         const { email } = req.body;
 
         const user = await User.findOne({ email });
@@ -131,59 +136,35 @@ exports.userForgotPassword = async (req, res) => {
         }
 
         // Generate a password reset token
-        const resetToken = crypto.randomBytes(32).toString('hex');
+        
         user.passwordResetToken = resetToken;
         user.passwordResetExpires = Date.now() + 3600000; // Token valid for 1 hour
         await user.save();
 
         // Send the password reset email
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-              type: 'OAuth2',
-              user: mail.USER,
-              clientId: CLIENT_ID,
-              clientSecret: CLIENT_SEC,
-              refreshToken: REFRESH_TOKEN,
-              accessToken: token,
-            },
-        });
 
-        const resetLink = `http://localhost:3000/reset/${resetToken}`;
-        const mailOptions = {
-            from: mail.USER,
-            to: user.email,
-            subject: 'Password Reset',
-            html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
-        };
+        sendPasswordResetEmail(user.email, resetToken)
 
-         await transporter.sendMail(mailOptions);
-
-        res.status(200).json({ message: 'Password reset email sent successfully' });
-    } catch (error) {
-        console.error('Error sending password reset email:', error);
-        res.status(500).json({ message: 'Error sending password reset email' });
-    }
 };
 
 exports.userResetPassword = async (req, res) => {
-    try {
-        const { token, newPassword } = req.body;
+  try {
+      const { token, newPassword } = req.body;
 
-        const user = await User.findOne({ passwordResetToken: token, passwordResetExpires: { $gt: Date.now() } });
+      const user = await User.findOne({ passwordResetToken: token, passwordResetExpires: { $gt: Date.now() } });
 
-        if (!user) {
-            throw new Error(`Invalid token or token expired`);
-        }
+      if (!user) {
+          throw new Error(`Invalid token or token expired`);
+      }
 
-        // Hash the new password
-        const hashedPassword = await bcrypt.hash(newPassword, 10);
-        user.password = hashedPassword;
-        user.passwordResetToken = undefined;
-        user.passwordResetExpires = undefined;
-        await user.save();
+      // Hash the new password
+      const hashedPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedPassword;
+      user.passwordResetToken = undefined;
+      user.passwordResetExpires = undefined;
+      await user.save();
 
-        res.status(200).json({ message: 'Password reset successful' });
+      res.status(200).json({ message: 'Password reset successful' });
     } catch (error) {
         console.error('Error resetting password:', error);
         res.status(500).json({ message: 'Error resetting password' });

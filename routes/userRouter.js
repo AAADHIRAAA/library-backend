@@ -3,6 +3,9 @@ const router = express.Router();
 const mail = require("../utils/mail");
 const userController = require('../controllers/userController');
 const authMiddleware = require('../middleware/authMiddleware');
+const app = express();
+// Route for verifying email
+app.get('/verify', userController.verifyEmail);
 router.post('/signup', userController.signup);
 // Login route
 router.post('/login', userController.login);
