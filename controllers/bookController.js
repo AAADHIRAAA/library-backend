@@ -41,24 +41,20 @@ async function addNewEdition(req, res) {
             return res.status(404).json({ message: 'Book not found' });
         }
 
-        const newEdition = new Book({
-            title: existingBook.title,
-            author: existingBook.author,
-        });
-        await newEdition.save();
-
         const fileData = req.file.buffer;
         // Create a new file record and associate it with the new edition
         const newFile = new File({
             filename: `${existingBook.title}-Edition-${Date.now()}.pdf`,
             mimeType: 'application/pdf',
-            bookId: newEdition._id,
+            bookId: bookId,
             fileData:fileData// Store the file buffer
         });
         await newFile.save();
 
-        newEdition.file_id = newFile._id; // Assign the fileId to the new edition
-        await newEdition.save();
+         // Update the editions field of the corresponding book
+         const updatedEditions = [...existingBook.editions, newFile._id];
+         existingBook.editions = updatedEditions;
+         await existingBook.save();
 
         res.status(201).json({ message: 'New edition added' });
     } catch (error) {

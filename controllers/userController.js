@@ -76,7 +76,7 @@ async function verifyEmail(req, res) {
 
   // Mark the user's email as verified
   user.verified = true;
-
+  user.role ="user";
   // Save the changes to the user's document in the database
   await user.save();
 
@@ -114,10 +114,10 @@ async function login(req, res) {
 
       return res.status(401).json({ message: 'Account not verified. Verification email sent.' });
     }
-
+    const roles = user.role;
     // Generate and send JWT token for authentication
     const token = jwt.sign({ userId: user._id },jwtSecret, expiresIn);
-    res.status(200).json({ token });
+    res.status(200).json({ token, roles });
   } catch (error) {
     console.error('Error during login:', error);
     res.status(500).json({ message: 'Error during login' });
@@ -177,7 +177,7 @@ async function updateUser(req, res) {
       const id = req.params.id; 
       const updatedData = req.body;
 
-      const allowedFields = ['name', 'email', 'password', 'ph_no']; 
+      const allowedFields = ['name', 'password', 'ph_no']; 
       const updates = {};
 
       // Only include allowed fields in the updates object
