@@ -4,12 +4,11 @@ const path = require('path');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
-const jwtSecret = process.env.JWT_SECRET;
 const rateLimit = require('express-rate-limit');
 const userRouter = require('./routes/userRouter');
 const bookRouter = require('./routes/bookRouter');
-const userController = require('./controllers/userController');
-dotenv.config();
+
+dotenv.config({ path: './config.env' });
 const app = express();
 const limit = rateLimit({
   max: 100,

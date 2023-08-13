@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const roleSchema = new mongoose.Schema({
     _id: String,
-    name: String
+    role_name: String
 });
 
 const Role = mongoose.model('Role',roleSchema);
@@ -15,7 +15,7 @@ const userroleSchema = new mongoose.Schema({
 
 const UserRole = mongoose.model('UserRole',userroleSchema);
 
-module.export = {
+module.exports = {
     Role,
     UserRole
 };

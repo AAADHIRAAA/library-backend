@@ -171,45 +171,51 @@ exports.userResetPassword = async (req, res) => {
     }
 };
 
-// Update a user by their email
-async function updateUserByEmail(email, updatedData) {
-    try {
-        const allowedFields = ['name', 'email', 'password', 'ph_no']; // Add more fields as needed
-        const updates = {};
 
-        // Only include allowed fields in the updates object
-        for (const field of allowedFields) {
-            if (updatedData[field] !== undefined) {
-                updates[field] = updatedData[field];
-            }
-        }
+async function updateUser(req, res) {
+  try {
+      const id = req.params.id; 
+      const updatedData = req.body;
 
-        const user = await User.findOneAndUpdate({ email }, updates, { new: true });
-        if (!user) {
-            throw new Error(`User with email ${email} not found`);
-        }
-        return user;
-    } catch (error) {
-        throw error;
-    }
+      const allowedFields = ['name', 'email', 'password', 'ph_no']; 
+      const updates = {};
+
+      // Only include allowed fields in the updates object
+      for (const field of allowedFields) {
+          if (updatedData[field] !== undefined) {
+              updates[field] = updatedData[field];
+          }
+      }
+
+      const user = await User.findOneAndUpdate({id }, updates, { new: true });
+      if (!user) {
+          return res.status(404).json({ message: `User not found` });
+      }
+      return res.status(200).json(user);
+  } catch (error) {
+      return res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
-async function deleteUserByEmail(email) {
-    try {
-        const user = await User.findOneAndDelete({ email });
-        if (!user) {
-            throw new Error(`User with email ${email} not found`);
-        }
-        return user;
-    } catch (error) {
-        throw error;
-    }
+
+async function deleteUser(req, res) {
+  try {
+      const id = req.params.id; 
+
+      const user = await User.findOneAndDelete({id });
+      if (!user) {
+          return res.status(404).json({ message: `User not found` });
+      }
+      return res.status(200).json({ message: `User deleted successfully` });
+  } catch (error) {
+      return res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
 module.exports={
     signup,
     verifyEmail,
     login,
-    updateUserByEmail,
-    deleteUserByEmail
+    updateUser,
+    deleteUser
 }

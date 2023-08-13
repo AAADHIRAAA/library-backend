@@ -14,10 +14,10 @@ router.post('/login', userController.login);
 router.get('/verify-email/:token', userController.verifyEmail);
 
 // Update user route
-router.put('/update/:email', authMiddleware.authenticate, userController.updateUserByEmail);
+router.put('/update/:id', authMiddleware.authenticate, userController.updateUser);
 
 // Delete user route
-router.delete('/delete/:email', authMiddleware.authenticate, userController.deleteUserByEmail);
+router.delete('/delete/:id', authMiddleware.authenticate, userController.deleteUser);
 
 
 
