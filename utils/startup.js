@@ -1,7 +1,7 @@
-const Role = require("../models/userroleModel");
+const Role = require("../models/roleModel");
 const UserRole = require("../models/userroleModel");
 const User = require("../models/userModel");
-
+const startServer = require("../server");
 
 exports.performStartUp = async function () {
 // Create the user
@@ -59,6 +59,6 @@ exports.performStartUp = async function () {
         }
     }
 
-
     console.log('Startup tasks completed');
+    startServer();
 }

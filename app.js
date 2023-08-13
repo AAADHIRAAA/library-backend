@@ -1,15 +1,13 @@
-const createError = require('http-errors');
 const express = require('express');
+const app = express();
+const connection = require('./connection');
+const createError = require('http-errors');
 const path = require('path');
 const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const rateLimit = require('express-rate-limit');
-const userRouter = require('./routes/userRouter');
-const bookRouter = require('./routes/bookRouter');
 
-dotenv.config({ path: './config.env' });
-const app = express();
 const limit = rateLimit({
   max: 100,
   windowMs: 60 * 60 * 60,
@@ -23,12 +21,12 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 
 app.use('/library/api', limit);
+
+const userRouter = require('./routes/userRouter');
+const bookRouter = require('./routes/bookRouter');
+
 app.use('/library/api/users', userRouter);
 app.use('/library/api/books', bookRouter);
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
@@ -37,19 +35,11 @@ app.use(function(req, res, next) {
 
 // error handler
 app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-
-// Start your Express server
-const port = process.env.PORT || 3000;
-app.listen(port, () => {
-  console.log(`Server is running on port ${port}`);
+  // Send JSON response for errors
+  res.status(err.status || 500).json({
+    message: err.message,
+    error: req.app.get('env') === 'development' ? err : {}
+  });
 });
 
 module.exports = app;

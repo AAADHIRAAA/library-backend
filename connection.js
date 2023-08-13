@@ -1,7 +1,5 @@
 const mongoose = require('mongoose');
-const startup = require('./utils/startup');
-// Replace the connection string with your MongoDB Atlas connection string
-const atlasConnectionString = 'mongodb+srv://padmapriyas:Padma2023atlas@library-cluster.rhvnbwa.mongodb.net/librarydb';
+const atlasConnectionString = 'mongodb+srv://access_user:access_user@library-cluster.rhvnbwa.mongodb.net/librarydb';
 
 mongoose.connect(atlasConnectionString, {
   useNewUrlParser: true,
@@ -11,7 +9,8 @@ mongoose.connect(atlasConnectionString, {
 const db = mongoose.connection;
 
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
-db.once('open', () => {
+db.once('open',  () => {
   console.log('Connected to MongoDB Atlas');
+  const startup = require('./utils/startup');
+  startup.performStartUp();
 });
-await startup.performStartUp();
