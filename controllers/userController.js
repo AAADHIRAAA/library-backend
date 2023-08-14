@@ -1,16 +1,27 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
-const resetToken = process.env.RESET_TOKEN;
-const jwtSecret = process.env.JWT_SECRET;
-const emailSecret = process.env.EMAIL_SECRET;
-const expiresIn = process.env.JWT_EXPIRESIN;
 const mail = require("../utils/mail");
-const crypto = require('crypto');
+const path = require('path');
+const AppError = require('../utils/appError');
+
 const { isValidVerificationToken } = require('../utils/mail');
+const {sendVerificationEmail} = require('../utils/mail');
+const {sendPasswordResetEmail} = require('../utils/mail');
+// const crypto = require('crypto');
+
+// const secretKey = crypto.randomBytes(64).toString('hex');
+const resetToken = process.env.RESET_TOKEN;
+const jwtSecret = process.env.SECRET_KEY;
+const emailSecret = process.env.SECRET_KEY;
+const expiresIn = '1h';
+// const resetToken = crypto.randomBytes(32).toString('hex');
+//  const jwtSecret='170a431646a41253bed85607dc518f13817c8cba4eb591379bffffab2f12b2a76de6d0a7d70ce24f759d48b84bd6ac34921f86d3bf25c141a66544d22698fc19';
+// const emailSecret='170a431646a41253bed85607dc518f13817c8cba4eb591379bffffab2f12b2a76de6d0a7d70ce24f759d48b84bd6ac34921f86d3bf25c141a66544d22698fc19';
+// console.log(jwtSecret);
 
 function generateVerificationToken(user) {
+  console.log(emailSecret);
     const token = jwt.sign({ userId: user._id }, emailSecret,  expiresIn);
     return token;
   }
@@ -50,7 +61,7 @@ async function signup(req, res) {
     const verificationToken = generateVerificationToken(savedUser); 
 
     // Send the verification email using the verificationToken
-    await mail.sendVerificationEmail(email, verificationToken);
+     sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({ message: 'User registered successfully', user: savedUser });
   } catch (error) {
@@ -86,9 +97,12 @@ async function verifyEmail(req, res) {
 
 async function login(req, res) {
 
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return next(new AppError('Please provide both email and password', 400));
+}
   try {
 
-    const { email, password } = req.body;
     // Find the user by email
     const user = await User.findOne({ email });
 
@@ -117,15 +131,27 @@ async function login(req, res) {
     const roles = user.role;
     // Generate and send JWT token for authentication
     const token = jwt.sign({ userId: user._id },jwtSecret, expiresIn);
-    res.status(200).json({ token, roles });
-  } catch (error) {
-    console.error('Error during login:', error);
-    res.status(500).json({ message: 'Error during login' });
+    res.status(200).json({
+      status: 'success',
+            data: {
+                token,
+                roles
+            }
+     });
+  } catch (err) {
+    if (err.message === "EmptyResponse") {
+      const error = new AppError("User Not Found", 404);
+      error.sendResponse(res);
+  }
+  else{
+      const error = new AppError(err.message, 400);
+      error.sendResponse(res);
+  }
   }
 }
 
 
-exports.userForgotPassword = async (req, res) => {
+ async function userForgotPassword(req, res) {
 
         const { email } = req.body;
 
@@ -147,7 +173,7 @@ exports.userForgotPassword = async (req, res) => {
 
 };
 
-exports.userResetPassword = async (req, res) => {
+async function userResetPassword(req, res) {
   try {
       const { token, newPassword } = req.body;
 
@@ -217,5 +243,7 @@ module.exports={
     verifyEmail,
     login,
     updateUser,
-    deleteUser
+    deleteUser,
+    userForgotPassword,
+    userResetPassword
 }

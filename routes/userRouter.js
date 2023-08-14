@@ -13,5 +13,9 @@ router.put('/update/:id', authMiddleware.authenticate, userController.updateUser
 
 router.delete('/delete/:id', authMiddleware.authenticate, userController.deleteUser);
 
+router.post('/forgot-password', userController.userForgotPassword);
+
+router.post('/set-forgot-password', userController.userResetPassword);
+
 module.exports = router;
 
