@@ -118,7 +118,7 @@ async function deleteBook(req, res) {
         const editions = bookToDelete.editions;
         console.log(editions)
         for (const edition of editions){
-            console.log(edition)
+            console.log(edition);
             const book_edition = await Edition.findById(edition);
             await File.findByIdAndDelete(book_edition.file);
             await Edition.findByIdAndDelete(edition);
@@ -133,9 +133,112 @@ async function deleteBook(req, res) {
     }
 }
 
+ async function downloadFiles(req, res){
+    try {
+        const fileId = req.params.id;
+        const { bookId,edition_num }= req.body;
+        const file = await File.findById({ _id: fileId });
+        
+        if (!file) {
+            return res.status(404).json({
+                status: 'error',
+                message: 'File not found',
+            });
+        }
+        // const edition = await Edition.findOne({file:fileId});
+        // const edition_Id = edition.get('_id');
+        const book = await Book.findById({_id:bookId});
+        const fileName = book.get('title');
+        const fileData = file.get('fileData');
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${fileName}-Edition-${edition_num}.pdf"`);
+        const filename=`"${fileName}-Edition-${edition_num}.pdf"`;
+        console.log(filename);
+        res.send(fileData);
+    } catch (err) {
+        const e = new AppError(err.message, 500);
+        e.sendResponse(res);
+    }
+
+}
+
+// async function updateFiles(req,res){
+//     try{
+//             const fileId = req.params.id;
+//             const { BookId, edition_num} = req.body;
+//             const fileData = req.file.buffer;
+//             const file = await File.findById({_id:fileId});
+//             if(!file){
+//                 return res.status(404).json({
+//                     status:'error',
+//                     message:'File not Found'
+//                 });
+//             }
+//             const edition = await Edition.findOneAndDelete({file:fileId});
+//             const edition_id = edition.get('_id');
+//             const book = Book.findById({_id:BookId});
+//             const modify = book.deleteOne({editions:edition_id});
+//             console.log(modify);
+//     }
+//     catch(err){
+//         const e = new AppError(err.message, 500);
+//         e.sendResponse(res);
+//     }
+// }
+
+ async function updateFiles (req, res){
+  const fileId = req.params.fileId;
+  const { bookId, edition_num } = req.body;
+  const newFileData = req.file.buffer; // Assuming you have the new file data in the request
+
+  try {
+    // Delete existing file from Files collection
+    await File.findByIdAndDelete(fileId);
+
+    // Find the corresponding edition using the fileId
+    const existingEdition = await Edition.findOne({ file: fileId });
+
+    if (!existingEdition) {
+      return res.status(404).json({ message: 'Edition not found' });
+    }
+
+    const editionIdToDelete = existingEdition._id;
+
+    // Delete the corresponding edition from Editions collection
+    await Edition.findByIdAndDelete(editionIdToDelete);
+
+    // Remove edition reference from Book's editions array
+    await Book.findByIdAndUpdate(bookId, { $pull: { editions: editionIdToDelete } });
+
+    // Create new file record and save it
+    const newFile = new File({
+      fileData: newFileData,
+    });
+    const savedFile = await newFile.save();
+
+    // Create a new edition with the new file's id
+    const newEdition = new Edition({
+      edition_num: edition_num,
+      file: savedFile._id,
+    });
+    const savedEdition = await newEdition.save();
+
+    // Add the new edition's id to Book's editions array
+    await Book.findByIdAndUpdate(bookId, { $push: { editions: savedEdition._id } });
+
+    res.status(200).json({ message: 'File updated successfully' });
+  } catch (error) {
+    console.error('Error updating file:', error);
+    res.status(500).json({ message: 'Error updating file' });
+  }
+};
+
+
 module.exports = {
     addBook,
     updateBook,
     deleteBook,
-    addNewEdition
+    addNewEdition,
+    downloadFiles,
+    updateFiles
 };

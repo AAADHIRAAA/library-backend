@@ -16,7 +16,7 @@ exports.performStartUp = async function () {
                 verified: true,
                 role: 'admin'
             });
-            const hashedPassword = bcrypt.hash(admin.password, 10);
+            const hashedPassword = await bcrypt.hash(admin.password, 10);
             admin.password = hashedPassword;
           
             await admin.save();

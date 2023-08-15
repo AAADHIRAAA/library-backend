@@ -193,7 +193,7 @@ async function updateUser(req, res) {
         const id = req.user._id;
         const updatedData = req.body;
 
-        const allowedFields = ['name', 'password', 'ph_no'];
+        const allowedFields = ['name',  'ph_no'];
         const updates = {};
 
         // Only include allowed fields in the updates object
@@ -202,7 +202,6 @@ async function updateUser(req, res) {
                 updates[field] = updatedData[field];
             }
         }
-        updates["password"] = await bcrypt.hash(updates["password"], 10);
 
         const user=await User.findOneAndUpdate({_id:id}, updates, {new: true});
         // const user = User.findOne({id});
@@ -222,9 +221,9 @@ async function updateUser(req, res) {
 
 async function deleteUser(req, res) {
   try {
-      const id = req.params.id; 
+      const id = req.user.id; 
 
-      const user = await User.findOneAndDelete({id });
+      const user = await User.findByIdAndDelete({_id:id} );
       if (!user) {
           return res.status(404).json({ message: `User not found` });
       }
