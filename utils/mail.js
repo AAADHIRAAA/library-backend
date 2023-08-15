@@ -42,7 +42,7 @@ async function sendVerificationEmail(recipientEmail, verificationToken) {
     });
 
     // Construct the verification link
-    const verificationLink = `http://localhost:3000/verify?token=${verificationToken}`;
+    const verificationLink = `http://localhost:3000/library/api/users/verify-email/${verificationToken}`;
 
     // Set up the email data
     const mailOptions = {
@@ -64,11 +64,11 @@ async function sendVerificationEmail(recipientEmail, verificationToken) {
 function isValidVerificationToken(token) {
     // Adjust these values based on your token requirements
     const minLength = 32; // Minimum token length
-    const maxLength = 64; // Maximum token length
-  
+    const maxLength = 256; // Maximum token length
+
     // Regular expression to match alphanumeric characters
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-  
+
     return (
       token.length >= minLength &&
       token.length <= maxLength &&
@@ -95,7 +95,7 @@ async function sendPasswordResetEmail(recipientEmail, resetToken) {
     },
 });
 
-const resetLink = `http://localhost:3000/reset/${resetToken}`;
+const resetLink = `http://localhost:3000/library/api/users/set-forgot-password/${resetToken}`;
 const mailOptions = {
     from: USER,
     to: recipientEmail,

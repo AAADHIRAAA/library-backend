@@ -8,7 +8,7 @@ async function authenticate(req, res, next) {
         const token = req.header('Authorization').replace('Bearer ', '');
 
         // Verify the token using the JWT secret key
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.SECRET_KEY);
 
         // Find the user associated with the decoded token
         const user = await User.findOne({ _id: decoded.userId });
