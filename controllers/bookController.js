@@ -193,7 +193,7 @@ async function deleteBook(req, res) {
 
   try {
     // Delete existing file from Files collection
-    await File.findByIdAndDelete(fileId);
+    await File.findByIdAndDelete({_id:fileId});
 
     // Find the corresponding edition using the fileId
     const existingEdition = await Edition.findOne({ file: fileId });
@@ -205,10 +205,10 @@ async function deleteBook(req, res) {
     const editionIdToDelete = existingEdition._id;
 
     // Delete the corresponding edition from Editions collection
-    await Edition.findByIdAndDelete(editionIdToDelete);
+    await Edition.findByIdAndDelete({_id:editionIdToDelete});
 
     // Remove edition reference from Book's editions array
-    await Book.findByIdAndUpdate(bookId, { $pull: { editions: editionIdToDelete } });
+    await Book.findByIdAndUpdate({_id:bookId}, { $pull: { editions: editionIdToDelete } });
 
     // Create new file record and save it
     const newFile = new File({
@@ -224,7 +224,7 @@ async function deleteBook(req, res) {
     const savedEdition = await newEdition.save();
 
     // Add the new edition's id to Book's editions array
-    await Book.findByIdAndUpdate(bookId, { $push: { editions: savedEdition._id } });
+    await Book.findByIdAndUpdate({_id:bookId}, { $push: { editions: savedEdition._id } });
 
     res.status(200).json({ message: 'File updated successfully' });
   } catch (error) {
