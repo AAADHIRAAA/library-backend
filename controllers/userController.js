@@ -23,50 +23,50 @@ const expiresIn = '1h';
 function generateVerificationToken(user) {
     const token = jwt.sign({userId: user._id}, emailSecret, {expiresIn});
     return token;
-}
+  }
 
 
 async function signup(req, res) {
 
-    try {
+  try {
 
-        const {
-            name,
-            email,
-            password,
-            ph_no
-        } = req.body;
+    const {
+        name,
+        email,
+        password,
+        ph_no
+       } = req.body;
 
-        // Check if user with the provided email already exists
-        const existingUser = await User.findOne({email});
+    // Check if user with the provided email already exists
+    const existingUser = await User.findOne({ email });
 
-        if (existingUser) {
-            return res.status(400).json({message: 'Email already in use'});
-        }
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already in use' });
+    }
 
-        // Hash the password before storing it
-        const hashedPassword = await bcrypt.hash(password, 10);
+    // Hash the password before storing it
+    const hashedPassword = await bcrypt.hash(password, 10);
 
-        // Create a new user
-        const newUser = new User({
-            name,
-            email,
-            ph_no,
-            password: hashedPassword,
-        });
+    // Create a new user
+    const newUser = new User({
+      name,
+      email,
+      ph_no,
+      password: hashedPassword,
+    });
 
-        const savedUser = await newUser.save();
-        // Generate a verification token for the user based on email and password
-        const verificationToken = generateVerificationToken(savedUser);
+    const savedUser = await newUser.save();
+    // Generate a verification token for the user based on email and password
+    const verificationToken = generateVerificationToken(savedUser); 
 
         // Send the verification email using the verificationToken
         await sendVerificationEmail(email, verificationToken);
 
-        res.status(201).json({message: 'User registered successfully', user: savedUser});
-    } catch (error) {
-        console.error('Error signing up:', error);
-        res.status(500).json({message: 'Error signing up'});
-    }
+    res.status(201).json({ message: 'User registered successfully', user: savedUser });
+  } catch (error) {
+    console.error('Error signing up:', error);
+    res.status(500).json({ message: 'Error signing up' });
+  }
 }
 
 async function verifyEmail(req, res) {
@@ -97,42 +97,43 @@ async function verifyEmail(req, res) {
 
 async function login(req, res) {
 
-    const {email, password} = req.body;
+  try {
+
+    const { email, password } = req.body;
     if (!email || !password) {
-        return next(new AppError('Please provide both email and password', 400));
+    return next(new AppError('Please provide both email and password', 400));
     }
-    try {
+    // Find the user by email
+    const user = await User.findOne({ email });
 
-        // Find the user by email
-        const user = await User.findOne({email});
+    // Check if the user exists
+    if (!user) {
+      return res.status(401).json({ message: 'User not found' });
+    }
 
-        // Check if the user exists
-        if (!user) {
-            return res.status(401).json({message: 'User not found'});
-        }
+    // Compare the provided password with the stored hash
+    const isPasswordValid = await bcrypt.compare(password, user.password);
 
-        // Compare the provided password with the stored hash
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Invalid Password' });
+    }
 
-        if (!isPasswordValid) {
-            return res.status(401).json({message: 'Invalid Password'});
-        }
-
-        // Check if the user is verified
-        if (!user.verified) {
-            // Generate a dynamic verification token
-            const verificationToken = generateVerificationToken(user);
+    // Check if the user is verified
+    if (!user.verified) {
+      // Generate a dynamic verification token
+      const verificationToken = generateVerificationToken(user);
 
             // Send a verification email with the token
             await sendVerificationEmail(user.email, verificationToken);
 
-            return res.status(401).json({message: 'Account not verified. Verification email sent.'});
-        }
-        const roles = user.role;
-        // Generate and send JWT token for authentication
-        const token = jwt.sign({userId: user._id}, jwtSecret, {expiresIn});
-        res.status(200).json({
-            status: 'success',
+      return res.status(401).json({ message: 'Account not verified. Verification email sent.' });
+    }
+    const roles = user.role;
+    // Generate and send JWT token for authentication
+    const token = jwt.sign({ userId: user._id },jwtSecret, {expiresIn: process.env.JWT_EXPIRESIN});
+
+    res.status(200).json({
+      status: 'success',
             data: {
                 token,
                 roles
@@ -154,7 +155,7 @@ async function userForgotPassword(req, res) {
     try{
         const {email} = req.body;
 
-        const user = await User.findOne({email});
+        const user = await User.findOne({ email });
 
         if (!user) {
             throw new Error(`User with email ${email} not found`);
@@ -170,7 +171,7 @@ async function userForgotPassword(req, res) {
         const err = new AppError(e.message, 500);
         err.sendResponse(res);
     }
-    
+
 }
 
 async function userResetPassword(req, res) {
@@ -202,7 +203,6 @@ async function userResetPassword(req, res) {
 async function updateUser(req, res) {
     try {
         const id = req.user._id;
-        console.log(id)
         const updatedData = req.body;
 
         const allowedFields = ['name', 'password', 'ph_no'];
@@ -233,20 +233,20 @@ async function updateUser(req, res) {
 
 
 async function deleteUser(req, res) {
-    try {
-        const id = req.params.id;
+  try {
+      const id = req.params.id; 
 
-        const user = await User.findOneAndDelete({id});
-        if (!user) {
-            return res.status(404).json({message: `User not found`});
-        }
-        return res.status(200).json({message: `User deleted successfully`});
-    } catch (error) {
-        return res.status(500).json({message: 'Internal server error'});
-    }
+      const user = await User.findOneAndDelete({id });
+      if (!user) {
+          return res.status(404).json({ message: `User not found` });
+      }
+      return res.status(200).json({ message: `User deleted successfully` });
+  } catch (error) {
+      return res.status(500).json({ message: 'Internal server error' });
+  }
 }
 
-module.exports = {
+module.exports={
     signup,
     verifyEmail,
     login,
