@@ -1,28 +1,17 @@
 const User = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const mail = require("../utils/mail");
-const path = require('path');
 const AppError = require('../utils/appError');
 
-const {isValidVerificationToken} = require('../utils/mail');
 const {sendVerificationEmail} = require('../utils/mail');
 const {sendPasswordResetEmail} = require('../utils/mail');
-// const crypto = require('crypto');
 
-// const secretKey = crypto.randomBytes(64).toString('hex');
-// const resetToken = process.env.RESET_TOKEN;
 const jwtSecret = process.env.SECRET_KEY;
 const emailSecret = process.env.SECRET_KEY;
-const expiresIn = '1h';
-// const resetToken = crypto.randomBytes(32).toString('hex');
-//  const jwtSecret='170a431646a41253bed85607dc518f13817c8cba4eb591379bffffab2f12b2a76de6d0a7d70ce24f759d48b84bd6ac34921f86d3bf25c141a66544d22698fc19';
-// const emailSecret='170a431646a41253bed85607dc518f13817c8cba4eb591379bffffab2f12b2a76de6d0a7d70ce24f759d48b84bd6ac34921f86d3bf25c141a66544d22698fc19';
-// console.log(jwtSecret);
+
 
 function generateVerificationToken(user) {
-    const token = jwt.sign({userId: user._id}, emailSecret, {expiresIn});
-    return token;
+    return jwt.sign({userId: user._id}, emailSecret, {expiresIn: process.env.JWT_EXPIRESIN});
   }
 
 
@@ -59,8 +48,7 @@ async function signup(req, res) {
     // Generate a verification token for the user based on email and password
     const verificationToken = generateVerificationToken(savedUser); 
 
-        // Send the verification email using the verificationToken
-        await sendVerificationEmail(email, verificationToken);
+    await sendVerificationEmail(email, verificationToken);
 
     res.status(201).json({ message: 'User registered successfully', user: savedUser });
   } catch (error) {

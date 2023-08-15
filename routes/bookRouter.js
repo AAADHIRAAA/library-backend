@@ -10,9 +10,8 @@ const upload = multer({
         fileSize: 1048576 // 1 mb
     }
 });
-
-router.post('/add-new-edition/:bookId', upload.single('file'), bookController.addNewEdition);
 router.post('/add-book', upload.single('file'), bookController.addBook);
+router.post('/add-new-edition/:bookId', upload.single('file'), bookController.addNewEdition);
 router.put('/update-book/:id', bookController.updateBook);
 router.delete('/delete/:id', bookController.deleteBook);
 
