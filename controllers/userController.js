@@ -14,7 +14,7 @@ const {sendPasswordResetEmail} = require('../utils/mail');
 const resetToken = process.env.RESET_TOKEN;
 const jwtSecret = process.env.SECRET_KEY;
 const emailSecret = process.env.SECRET_KEY;
-const expiresIn = '1h';
+// const expiresIn = '1h';
 // const resetToken = crypto.randomBytes(32).toString('hex');
 //  const jwtSecret='170a431646a41253bed85607dc518f13817c8cba4eb591379bffffab2f12b2a76de6d0a7d70ce24f759d48b84bd6ac34921f86d3bf25c141a66544d22698fc19';
 // const emailSecret='170a431646a41253bed85607dc518f13817c8cba4eb591379bffffab2f12b2a76de6d0a7d70ce24f759d48b84bd6ac34921f86d3bf25c141a66544d22698fc19';
@@ -22,7 +22,7 @@ const expiresIn = '1h';
 
 function generateVerificationToken(user) {
   console.log(emailSecret);
-    const token = jwt.sign({ userId: user._id }, emailSecret,  expiresIn);
+    const token = jwt.sign({ userId: user._id }, emailSecret,  {expiresIn: process.env.JWT_EXPIRESIN});
     return token;
   }
   
@@ -97,12 +97,12 @@ async function verifyEmail(req, res) {
 
 async function login(req, res) {
 
-  const { email, password } = req.body;
-  if (!email || !password) {
-    return next(new AppError('Please provide both email and password', 400));
-}
   try {
 
+    const { email, password } = req.body;
+    if (!email || !password) {
+    return next(new AppError('Please provide both email and password', 400));
+}
     // Find the user by email
     const user = await User.findOne({ email });
 
@@ -130,7 +130,8 @@ async function login(req, res) {
     }
     const roles = user.role;
     // Generate and send JWT token for authentication
-    const token = jwt.sign({ userId: user._id },jwtSecret, expiresIn);
+    const token = jwt.sign({ userId: user._id },jwtSecret, {expiresIn: process.env.JWT_EXPIRESIN});
+    
     res.status(200).json({
       status: 'success',
             data: {
@@ -139,15 +140,12 @@ async function login(req, res) {
             }
      });
   } catch (err) {
-    if (err.message === "EmptyResponse") {
-      const error = new AppError("User Not Found", 404);
-      error.sendResponse(res);
-  }
-  else{
+    
       const error = new AppError(err.message, 400);
       error.sendResponse(res);
+      console.error(err);
   }
-  }
+  
 }
 
 
