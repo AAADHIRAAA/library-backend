@@ -3,10 +3,10 @@ const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 const mongoose = require('mongoose'); 
 
-CLIENT_ID = '571856393657-g1jninnif81gaoeiks72jd12kn4gc104.apps.googleusercontent.com';
-CLIENT_SEC = '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';
-REFRESH_TOKEN = '1//04BIXPNw1PcVpCgYIARAAGAQSNwF-L9IrR7R_DYx-i9zc7_P4OlDV53LqX58t0YOtG-DKGI4O4gQY31t2MlAZLA4KWR8ViT3bjqY';
-USER = 'padmapriyas.2004@gmail.com';
+CLIENT_ID = '14505838145-p2ctlj21gdci8jfnbvsmt7a6gro61b83.apps.googleusercontent.com';
+CLIENT_SEC = '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';
+REFRESH_TOKEN = '1//044aYfGwMrZ7uCgYIARAAGAQSNwF-L9Ir7ae1NzjAE7h9LwSbpprhZPV7T8YWtwkNqZcMWzYb8fewMovK1iyLnmuZ78u-zhnmJGA';
+USER = 'padma.test.project@gmail.com';
 
 // Create an OAuth2 client using your client credentials
 const oAuth2Client = new OAuth2Client({

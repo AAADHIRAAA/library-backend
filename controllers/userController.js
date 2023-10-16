@@ -221,7 +221,7 @@ async function updateUser(req, res) {
 
 async function deleteUser(req, res) {
   try {
-      const id = req.user.id; 
+      const id = req.params.id; 
 
       const user = await User.findByIdAndDelete({_id:id} );
       if (!user) {
