@@ -1,5 +1,7 @@
 const mongoose = require('mongoose');
-const atlasConnectionString = 'mongodb+srv://access_user:access_user@library-cluster.rhvnbwa.mongodb.net/librarydb';
+const dotenv = require('dotenv');
+dotenv.config({path:'./config.env'});
+const atlasConnectionString = process.env.MONGODB_CONNECTION_URL;
 
 mongoose.connect(atlasConnectionString, {
   useNewUrlParser: true,
