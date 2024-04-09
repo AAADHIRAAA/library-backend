@@ -1,4 +1,7 @@
 const mongoose = require('mongoose');
+const dotenv = require('dotenv');
+dotenv.config({path:'./config.env'});
+
 const atlasConnectionString = process.env.MONGODB_CONNECTION_URL;
 
 mongoose.connect(atlasConnectionString, {
