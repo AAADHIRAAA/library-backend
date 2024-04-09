@@ -3,10 +3,14 @@ const app = express();
 const connection = require('./connection');
 const createError = require('http-errors');
 const path = require('path');
-const dotenv = require('dotenv');
 const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const rateLimit = require('express-rate-limit');
+
+app.use(logger('dev'));
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(cookieParser());
 
 const limit = rateLimit({
   max: 100,
@@ -15,10 +19,6 @@ const limit = rateLimit({
 });
 
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 
 app.use('/library/api', limit);
 

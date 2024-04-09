@@ -3,10 +3,10 @@ const nodemailer = require('nodemailer');
 const { OAuth2Client } = require('google-auth-library');
 const mongoose = require('mongoose'); 
 
-CLIENT_ID = '571856393657-g1jninnif81gaoeiks72jd12kn4gc104.apps.googleusercontent.com';
-CLIENT_SEC = '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';
-REFRESH_TOKEN = '1//04BIXPNw1PcVpCgYIARAAGAQSNwF-L9IrR7R_DYx-i9zc7_P4OlDV53LqX58t0YOtG-DKGI4O4gQY31t2MlAZLA4KWR8ViT3bjqY';
-USER = 'padmapriyas.2004@gmail.com';
+CLIENT_ID = '14505838145-p2ctlj21gdci8jfnbvsmt7a6gro61b83.apps.googleusercontent.com';
+CLIENT_SEC = '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';
+REFRESH_TOKEN = '1//044aYfGwMrZ7uCgYIARAAGAQSNwF-L9Ir7ae1NzjAE7h9LwSbpprhZPV7T8YWtwkNqZcMWzYb8fewMovK1iyLnmuZ78u-zhnmJGA';
+USER = 'padma.test.project@gmail.com';
 
 // Create an OAuth2 client using your client credentials
 const oAuth2Client = new OAuth2Client({
@@ -42,7 +42,7 @@ async function sendVerificationEmail(recipientEmail, verificationToken) {
     });
 
     // Construct the verification link
-    const verificationLink = `http://localhost:3000/verify?token=${verificationToken}`;
+    const verificationLink = `http://localhost:3000/library/api/users/verify-email/${verificationToken}`;
 
     // Set up the email data
     const mailOptions = {
@@ -64,11 +64,11 @@ async function sendVerificationEmail(recipientEmail, verificationToken) {
 function isValidVerificationToken(token) {
     // Adjust these values based on your token requirements
     const minLength = 32; // Minimum token length
-    const maxLength = 64; // Maximum token length
-  
+    const maxLength = 256; // Maximum token length
+
     // Regular expression to match alphanumeric characters
     const alphanumericRegex = /^[a-zA-Z0-9]+$/;
-  
+
     return (
       token.length >= minLength &&
       token.length <= maxLength &&
@@ -87,7 +87,7 @@ async function sendPasswordResetEmail(recipientEmail, resetToken) {
     service: 'gmail',
     auth: {
       type: 'OAuth2',
-      user: mail.USER,
+      user: USER,
       clientId: CLIENT_ID,
       clientSecret: CLIENT_SEC,
       refreshToken: REFRESH_TOKEN,
@@ -95,7 +95,7 @@ async function sendPasswordResetEmail(recipientEmail, resetToken) {
     },
 });
 
-const resetLink = `http://localhost:3000/reset/${resetToken}`;
+const resetLink = `http://localhost:3000/library/api/users/set-forgot-password/${resetToken}`;
 const mailOptions = {
     from: USER,
     to: recipientEmail,
@@ -103,12 +103,10 @@ const mailOptions = {
     html: `<p>Click <a href="${resetLink}">here</a> to reset your password.</p>`,
 };
 
- await transporter.sendMail(mailOptions);
-
-res.status(200).json({ message: 'Password reset email sent successfully' });
+ const result = await transporter.sendMail(mailOptions);
+ console.log('Password reset email sent:', result);
 } catch (error) {
-console.error('Error sending password reset email:', error);
-res.status(500).json({ message: 'Error sending password reset email' });
+  console.error('Error sending password reset email:', error);
 }
 };
 
