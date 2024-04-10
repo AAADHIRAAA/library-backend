@@ -52,10 +52,10 @@ async function signup(req, res) {
     // Send the verification email using the verificationToken
     await mail.sendVerificationEmail(email, verificationToken);
 
-    res.status(201).json({ message: 'User registered successfully', user: savedUser });
+    return res.status(201).json({ message: 'User registered successfully', user: savedUser });
   } catch (error) {
     console.error('Error signing up:', error);
-    res.status(500).json({ message: 'Error signing up' });
+    return res.status(500).json({ message: 'Error signing up' });
   }
 }
 
